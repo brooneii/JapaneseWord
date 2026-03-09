@@ -1422,9 +1422,10 @@ elif menu == "✍️ 따라쓰기":
     # ── 시작 전 ──
     if st.session_state.trace_mode == "not_started":
         st.markdown('<div style="background:white;border-radius:16px;padding:1.2rem 1.5rem;box-shadow:0 2px 12px rgba(114,9,183,0.08);margin-bottom:1rem;color:#555;">✏️ 한국어 뜻을 보고 일본어를 캔버스에 직접 써보세요!<br>힌트를 단계별로 확인하고, 다 쓴 후 <b>정답 확인</b> 버튼으로 답을 맞춰보세요 🌸</div>', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1: tr_src = st.selectbox("연습할 단어 범위", ["전체 단어","즐겨찾기만","동사만","명사만","형용사만","오답 단어"])
-        with c2: tr_cnt = st.slider("연습할 단어 수", 3, min(20, len(st.session_state.words)), 5)
+        ca, cb, cc_ = st.columns(3)
+        with ca: tr_src = st.selectbox("단어 범위", ["전체 단어","즐겨찾기만","동사만","명사만","형용사만","오답 단어"])
+        with cb: tr_lv  = st.selectbox("JLPT 레벨", LEVELS, key="tr_lv")
+        with cc_: tr_cnt = st.slider("단어 수", 3, min(30, len(st.session_state.words)), 10)
         src_map = {
             "전체 단어":  lambda w: True,
             "즐겨찾기만": lambda w: w["favorite"],
@@ -1433,8 +1434,10 @@ elif menu == "✍️ 따라쓰기":
             "형용사만":   lambda w: w["category"] == "형용사",
             "오답 단어":  lambda w: w["wrong"] > 0,
         }
-        tr_lv = st.selectbox("레벨 필터", LEVELS, key="tr_lv")
         pool = [w for w in st.session_state.words if src_map[tr_src](w) and (tr_lv=="전체" or w.get("level")==tr_lv)]
+        lv_label = f" ({tr_lv})" if tr_lv != "전체" else ""
+        cnt_label = f"{len(pool)}개 해당"
+        st.caption(f"📚 선택된 범위: {cnt_label}{lv_label}")
         if st.button("✍️ 따라쓰기 시작!", use_container_width=True):
             if not pool:
                 st.warning("해당 범위에 단어가 없습니다.")
@@ -1477,14 +1480,14 @@ elif menu == "✍️ 따라쓰기":
             "<style>"
             "*{box-sizing:border-box;margin:0;padding:0;}"
             "body{background:transparent;-webkit-tap-highlight-color:transparent;}"
-            ".wrap{background:white;border-radius:20px;padding:1rem;box-shadow:0 4px 24px rgba(114,9,183,0.12);max-width:540px;margin:0 auto;}"
-            ".meaning{text-align:center;font-family:'Noto Sans KR',sans-serif;font-size:1.5rem;font-weight:700;color:#b5179e;margin-bottom:0.7rem;}"
-            ".cw{position:relative;width:100%;aspect-ratio:4/3;border:2.5px dashed rgba(181,23,158,0.3);border-radius:14px;overflow:hidden;background:#f9f9f9;touch-action:none;user-select:none;}"
+            ".wrap{background:white;border-radius:20px;padding:0.7rem 0.8rem;box-shadow:0 4px 24px rgba(114,9,183,0.12);max-width:100%;margin:0 auto;}"
+            ".meaning{text-align:center;font-family:'Noto Sans KR',sans-serif;font-size:1.2rem;font-weight:700;color:#b5179e;margin-bottom:0.4rem;}"
+            ".cw{position:relative;width:100%;aspect-ratio:3/2;max-height:260px;border:2.5px dashed rgba(181,23,158,0.3);border-radius:14px;overflow:hidden;background:#f9f9f9;touch-action:none;user-select:none;}"
             f".ghost{{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif JP',serif;font-size:clamp(4rem,20vw,9rem);font-weight:700;color:{ghost_color};pointer-events:none;user-select:none;letter-spacing:0.06em;}}"
             ".grid{position:absolute;inset:0;pointer-events:none;opacity:0.07;}"
             "canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none;}"
             ".toolbar{display:flex;gap:7px;margin-top:0.7rem;}"
-            ".tbtn{flex:1;padding:0.65rem 0.2rem;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:0.15s;-webkit-tap-highlight-color:transparent;}"
+            ".tbtn{flex:1;padding:0.5rem 0.2rem;border:none;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;transition:0.15s;-webkit-tap-highlight-color:transparent;}"
             ".tbtn:active{transform:scale(0.95);}"
             ".pen{background:#1a0a2e;color:white;}.ers{background:#fde8d8;color:#b55017;}.clr{background:#f0e6ff;color:#7209b7;}"
             ".tbtn.on{outline:2.5px solid #b5179e;}"
@@ -1543,7 +1546,7 @@ elif menu == "✍️ 따라쓰기":
             "</script></body></html>"
         )
 
-        components.html(canvas_html, height=420, scrolling=False)
+        components.html(canvas_html, height=560, scrolling=False)
 
         # ── 힌트 3단계 ──
         st.markdown("---")

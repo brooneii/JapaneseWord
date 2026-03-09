@@ -442,121 +442,279 @@ elif menu == "🧠 퀴즈":
 # ✍️ 따라쓰기
 # ═══════════════════════════════════════════
 elif menu == "✍️ 따라쓰기":
+    import streamlit.components.v1 as components
+
     st.markdown('<div class="section-header">✍️ 따라쓰기 연습</div>', unsafe_allow_html=True)
 
+    for _k, _v in [("hint_level", 0), ("answer_shown", False)]:
+        if _k not in st.session_state:
+            st.session_state[_k] = _v
+
+    # ── 시작 전 ──
     if st.session_state.trace_mode == "not_started":
-        st.markdown('<div style="background:white;border-radius:16px;padding:1.2rem 1.5rem;box-shadow:0 2px 12px rgba(114,9,183,0.08);margin-bottom:1rem;color:#555;">단어를 보고 노트에 직접 써보거나, 입력창에 히라가나·로마자·한자를 입력해 정답을 확인하세요. 필획 순서 링크도 제공됩니다!</div>', unsafe_allow_html=True)
-
+        st.markdown('<div style="background:white;border-radius:16px;padding:1.2rem 1.5rem;box-shadow:0 2px 12px rgba(114,9,183,0.08);margin-bottom:1rem;color:#555;">✏️ 한국어 뜻을 보고 일본어를 캔버스에 직접 써보세요!<br>힌트를 단계별로 확인하고, 다 쓴 후 <b>정답 확인</b> 버튼으로 답을 맞춰보세요 🌸</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
-        with c1: tr_src  = st.selectbox("연습할 단어 범위", ["전체 단어","즐겨찾기만","동사만","명사만","형용사만","오답 단어"])
-        with c2: tr_show = st.selectbox("힌트 표시", ["한국어 뜻만","뜻+한자","뜻+히라가나","모두 보기"])
-        tr_cnt = st.slider("연습할 단어 수", 3, min(20, len(st.session_state.words)), 5)
-
-        src = {"전체 단어": lambda w: True, "즐겨찾기만": lambda w: w["favorite"],
-               "동사만": lambda w: w["category"]=="동사", "명사만": lambda w: w["category"]=="명사",
-               "형용사만": lambda w: w["category"]=="형용사", "오답 단어": lambda w: w["wrong"] > 0}
-        pool = [w for w in st.session_state.words if src[tr_src](w)]
-
+        with c1: tr_src = st.selectbox("연습할 단어 범위", ["전체 단어","즐겨찾기만","동사만","명사만","형용사만","오답 단어"])
+        with c2: tr_cnt = st.slider("연습할 단어 수", 3, min(20, len(st.session_state.words)), 5)
+        src_map = {
+            "전체 단어":  lambda w: True,
+            "즐겨찾기만": lambda w: w["favorite"],
+            "동사만":     lambda w: w["category"] == "동사",
+            "명사만":     lambda w: w["category"] == "명사",
+            "형용사만":   lambda w: w["category"] == "형용사",
+            "오답 단어":  lambda w: w["wrong"] > 0,
+        }
+        pool = [w for w in st.session_state.words if src_map[tr_src](w)]
         if st.button("✍️ 따라쓰기 시작!", use_container_width=True):
-            if not pool: st.warning("해당 범위에 단어가 없습니다.")
+            if not pool:
+                st.warning("해당 범위에 단어가 없습니다.")
             else:
                 shuffled = pool.copy(); random.shuffle(shuffled)
-                st.session_state.trace_words = shuffled[:tr_cnt]
-                st.session_state.trace_idx   = 0
-                st.session_state.trace_mode  = "in_progress"
-                st.session_state.trace_show  = tr_show
-                st.session_state.trace_checked = False
+                st.session_state.trace_words        = shuffled[:tr_cnt]
+                st.session_state.trace_idx          = 0
+                st.session_state.trace_mode         = "in_progress"
+                st.session_state.trace_checked      = False
                 st.session_state.trace_check_result = None
+                st.session_state.hint_level         = 0
+                st.session_state.answer_shown       = False
                 st.rerun()
 
+    # ── 진행 중 ──
     elif st.session_state.trace_mode == "in_progress":
-        t_idx   = st.session_state.trace_idx
-        t_words = st.session_state.trace_words
-        total_t = len(t_words)
-        current = t_words[t_idx]
+        t_idx     = st.session_state.trace_idx
+        t_words   = st.session_state.trace_words
+        total_t   = len(t_words)
+        current   = t_words[t_idx]
+        hl        = st.session_state.hint_level
+        ans_shown = st.session_state.answer_shown
 
         st.progress(t_idx / total_t, text=f"✍️ {t_idx+1} / {total_t} 번째 단어")
 
-        tr_show = st.session_state.get("trace_show", "한국어 뜻만")
-        hint_k  = current["kanji"]    if tr_show in ["뜻+한자","모두 보기"] else ""
-        hint_h  = current["hiragana"] if tr_show in ["뜻+히라가나","모두 보기"] else ""
-        hint_r  = current["romaji"]   if tr_show == "모두 보기" else ""
+        # ghost 글자: hl=0,1→빈칸  hl=2→히라가나반투명  hl=3→한자반투명
+        if hl <= 1:
+            ghost_char, ghost_alpha = "", "0.0"
+        elif hl == 2:
+            ghost_char, ghost_alpha = current["hiragana"], "0.15"
+        else:
+            ghost_char, ghost_alpha = current["kanji"], "0.18"
+        ghost_color = f"rgba(181,23,158,{ghost_alpha})"
 
-        sep = "&nbsp;&nbsp;·&nbsp;&nbsp;"
-        hint_line = f'🔹 {current["meaning"]}'
-        if hint_k: hint_line += sep + hint_k
-        if hint_h: hint_line += sep + hint_h
-        if hint_r: hint_line += sep + hint_r
+        # ── 캔버스 HTML ──
+        canvas_html = (
+            "<!DOCTYPE html><html><head>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=no'>"
+            "<link href='https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+KR:wght@700&display=swap' rel='stylesheet'>"
+            "<style>"
+            "*{box-sizing:border-box;margin:0;padding:0;}"
+            "body{background:transparent;-webkit-tap-highlight-color:transparent;}"
+            ".wrap{background:white;border-radius:20px;padding:1rem;box-shadow:0 4px 24px rgba(114,9,183,0.12);max-width:540px;margin:0 auto;}"
+            ".meaning{text-align:center;font-family:'Noto Sans KR',sans-serif;font-size:1.5rem;font-weight:700;color:#b5179e;margin-bottom:0.7rem;}"
+            ".cw{position:relative;width:100%;aspect-ratio:4/3;border:2.5px dashed rgba(181,23,158,0.3);border-radius:14px;overflow:hidden;background:#f9f9f9;touch-action:none;user-select:none;}"
+            f".ghost{{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif JP',serif;font-size:clamp(4rem,20vw,9rem);font-weight:700;color:{ghost_color};pointer-events:none;user-select:none;letter-spacing:0.06em;}}"
+            ".grid{position:absolute;inset:0;pointer-events:none;opacity:0.07;}"
+            "canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none;}"
+            ".toolbar{display:flex;gap:7px;margin-top:0.7rem;}"
+            ".tbtn{flex:1;padding:0.65rem 0.2rem;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:0.15s;-webkit-tap-highlight-color:transparent;}"
+            ".tbtn:active{transform:scale(0.95);}"
+            ".pen{background:#1a0a2e;color:white;}.ers{background:#fde8d8;color:#b55017;}.clr{background:#f0e6ff;color:#7209b7;}"
+            ".tbtn.on{outline:2.5px solid #b5179e;}"
+            ".srow{display:flex;gap:8px;margin-top:0.5rem;align-items:center;}"
+            ".sdot{width:30px;height:30px;border-radius:50%;border:2px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}"
+            ".sdot.on{border-color:#b5179e;background:#fdf0ff;}"
+            ".cdot{width:22px;height:22px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;}"
+            ".cdot.on{border-color:#b5179e;box-shadow:0 0 0 2px #f0e;}"
+            ".slbl{font-size:0.72rem;color:#aaa;margin-left:auto;}"
+            "</style></head><body>"
+            "<div class='wrap'>"
+            f"<div class='meaning'>🔹 {current['meaning']}</div>"
+            "<div class='cw' id='cw'>"
+            "<svg class='grid' viewBox='0 0 100 100' preserveAspectRatio='none'>"
+            "<line x1='50' y1='0' x2='50' y2='100' stroke='#777' stroke-width='0.8'/>"
+            "<line x1='0' y1='50' x2='100' y2='50' stroke='#777' stroke-width='0.8'/>"
+            "<line x1='0' y1='0' x2='100' y2='100' stroke='#777' stroke-width='0.4'/>"
+            "<line x1='100' y1='0' x2='0' y2='100' stroke='#777' stroke-width='0.4'/>"
+            "</svg>"
+            f"<div class='ghost' id='ghost'>{ghost_char}</div>"
+            "<canvas id='c'></canvas>"
+            "</div>"
+            "<div class='toolbar'>"
+            "<button class='tbtn pen on' id='bPen' onclick=\"setTool('pen')\">🖊️ 펜</button>"
+            "<button class='tbtn ers' id='bErs' onclick=\"setTool('eraser')\">🧹 지우개</button>"
+            "<button class='tbtn clr' onclick='clearAll()'>🗑️ 전체삭제</button>"
+            "</div>"
+            "<div class='srow'>"
+            "<div class='sdot on' id='s1' onclick='setSz(4,this)'><div style='width:5px;height:5px;border-radius:50%;background:#333;'></div></div>"
+            "<div class='sdot' id='s2' onclick='setSz(9,this)'><div style='width:10px;height:10px;border-radius:50%;background:#333;'></div></div>"
+            "<div class='sdot' id='s3' onclick='setSz(16,this)'><div style='width:17px;height:17px;border-radius:50%;background:#333;'></div></div>"
+            "<div class='cdot on' id='c1' onclick=\"setClr('#1a0a2e',this)\" style='background:#1a0a2e;margin-left:10px;'></div>"
+            "<div class='cdot' id='c2' onclick=\"setClr('#b5179e',this)\" style='background:#b5179e;'></div>"
+            "<div class='cdot' id='c3' onclick=\"setClr('#3a0ca3',this)\" style='background:#3a0ca3;'></div>"
+            "<span class='slbl'>굵기 · 색상</span>"
+            "</div></div>"
+            "<script>"
+            "const cv=document.getElementById('c'),ctx=cv.getContext('2d'),cw=document.getElementById('cw');"
+            "let drawing=false,tool='pen',sz=4,clr='#1a0a2e';"
+            "function resize(){const r=cv.getBoundingClientRect();cv.width=r.width;cv.height=r.height;}"
+            "resize();new ResizeObserver(resize).observe(cw);"
+            "function pt(e){const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];}"
+            "function down(e){e.preventDefault();drawing=true;const[x,y]=pt(e);ctx.beginPath();ctx.moveTo(x,y);}"
+            "function move(e){if(!drawing)return;e.preventDefault();const[x,y]=pt(e);ctx.lineWidth=tool==='eraser'?sz*5:sz;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=tool==='eraser'?'#f9f9f9':clr;ctx.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';ctx.lineTo(x,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y);}"
+            "function up(){drawing=false;ctx.beginPath();}"
+            "cv.addEventListener('mousedown',down,{passive:false});"
+            "cv.addEventListener('mousemove',move,{passive:false});"
+            "cv.addEventListener('mouseup',up);cv.addEventListener('mouseleave',up);"
+            "cv.addEventListener('touchstart',down,{passive:false});"
+            "cv.addEventListener('touchmove',move,{passive:false});"
+            "cv.addEventListener('touchend',up);"
+            "function clearAll(){ctx.clearRect(0,0,cv.width,cv.height);}"
+            "function setTool(t){tool=t;document.getElementById('bPen').classList.toggle('on',t==='pen');document.getElementById('bErs').classList.toggle('on',t==='eraser');}"
+            "function setSz(s,el){sz=s;document.querySelectorAll('#s1,#s2,#s3').forEach(d=>d.classList.remove('on'));el.classList.add('on');}"
+            "function setClr(c,el){clr=c;document.querySelectorAll('#c1,#c2,#c3').forEach(d=>d.classList.remove('on'));el.classList.add('on');if(tool==='eraser')setTool('pen');}"
+            "</script></body></html>"
+        )
 
-        st.markdown(f"""
-        <div class="trace-container">
-            <div style="font-size:0.9rem;color:#b5179e;font-weight:600;letter-spacing:0.1em;margin-bottom:1rem;">{hint_line}</div>
-            <div class="trace-word">{current['kanji']}</div>
-            <div class="trace-guide">위 단어를 보고 노트에 써보거나, 아래 입력창에 타이핑해 보세요</div>
-        </div>
-        """, unsafe_allow_html=True)
+        components.html(canvas_html, height=420, scrolling=False)
 
-        st.markdown("#### 📝 정답 입력 (히라가나·로마자·한자 모두 가능)")
-        ci, cb = st.columns([4, 1])
-        with ci:
-            user_input = st.text_input("입력", value="", placeholder=f"예: {current['hiragana']} 또는 {current['romaji']}", key=f"ti_{t_idx}", label_visibility="collapsed")
-        with cb:
-            check_btn = st.button("✅ 확인", key=f"tc_{t_idx}", use_container_width=True)
+        # ── 힌트 3단계 ──
+        st.markdown("---")
+        st.markdown("**💡 힌트** (모르면 단계별로 확인하세요)")
 
-        if check_btn and user_input.strip():
-            inp = user_input.strip().lower().replace(" ", "")
-            is_correct = inp in [
-                current["hiragana"].replace(" ",""),
-                current["romaji"].lower().replace(" ",""),
-                current["kanji"].replace(" ","")
-            ]
-            st.session_state.trace_checked      = True
-            st.session_state.trace_check_result = is_correct
-            ri = next((j for j,w in enumerate(st.session_state.words) if w["kanji"]==current["kanji"]), None)
-            if ri is not None:
-                st.session_state.words[ri]["trace_count"] = st.session_state.words[ri].get("trace_count", 0) + 1
-            st.rerun()
+        def romaji_to_kr(romaji):
+            tbl = {
+                "tchi":"찌","chi":"치","tsu":"츠","shi":"시","sha":"샤","shu":"슈","sho":"쇼",
+                "cha":"차","chu":"추","cho":"초","kya":"캬","kyu":"큐","kyo":"쿄",
+                "gya":"갸","gyu":"규","gyo":"교","nya":"냐","nyu":"뉴","nyo":"뇨",
+                "hya":"햐","hyu":"휴","hyo":"효","mya":"먀","myu":"뮤","myo":"묘",
+                "rya":"랴","ryu":"류","ryo":"료","bya":"뱌","byu":"뷰","byo":"뵤",
+                "pya":"퍄","pyu":"퓨","pyo":"표","ka":"카","ki":"키","ku":"쿠","ke":"케","ko":"코",
+                "sa":"사","su":"스","se":"세","so":"소","ta":"타","te":"테","to":"토",
+                "na":"나","ni":"니","nu":"누","ne":"네","no":"노",
+                "ha":"하","hi":"히","fu":"후","he":"헤","ho":"호",
+                "ma":"마","mi":"미","mu":"무","me":"메","mo":"모",
+                "ya":"야","yu":"유","yo":"요","ra":"라","ri":"리","ru":"루","re":"레","ro":"로",
+                "wa":"와","wo":"오","ga":"가","gi":"기","gu":"구","ge":"게","go":"고",
+                "za":"자","zu":"즈","ze":"제","zo":"조","da":"다","de":"데","do":"도",
+                "ba":"바","bi":"비","bu":"부","be":"베","bo":"보","pa":"파","pi":"피",
+                "pu":"푸","pe":"페","po":"포","a":"아","i":"이","u":"우","e":"에","o":"오","n":"ㄴ",
+            }
+            r = romaji.lower().replace(" ", "").replace("-", "")
+            res = ""; i = 0
+            while i < len(r):
+                matched = False
+                for ln in [4, 3, 2, 1]:
+                    chunk = r[i:i+ln]
+                    if chunk in tbl:
+                        res += tbl[chunk]; i += ln; matched = True; break
+                if not matched:
+                    res += r[i]; i += 1
+            return res
 
-        if st.session_state.trace_checked:
-            result = st.session_state.trace_check_result
-            if result:
-                st.markdown(f'<div class="correct-badge">🎉 정답! &nbsp; <b>{current["kanji"]}</b> ({current["hiragana"]}) = {current["meaning"]}</div>', unsafe_allow_html=True)
+        h1, h2, h3 = st.columns(3)
+        with h1:
+            if hl == 0:
+                if st.button("💡 힌트1: 한글발음", use_container_width=True, key=f"h1_{t_idx}"):
+                    st.session_state.hint_level = 1; st.rerun()
             else:
-                st.markdown(f'<div class="wrong-badge">❌ 다시 도전! &nbsp; 정답: <b>{current["kanji"]}</b> · {current["hiragana"]} · {current["romaji"]}</div>', unsafe_allow_html=True)
+                kr = romaji_to_kr(current["romaji"])
+                st.markdown(f'<div style="background:#fff7e6;border:2px solid #f59e0b;border-radius:10px;padding:0.55rem;text-align:center;font-size:1.05rem;font-weight:700;color:#92400e;">🔊 {kr}</div>', unsafe_allow_html=True)
+        with h2:
+            if hl <= 1:
+                if st.button("💡 힌트2: 히라가나", use_container_width=True, key=f"h2_{t_idx}", disabled=(hl < 1)):
+                    st.session_state.hint_level = 2; st.rerun()
+            else:
+                st.markdown(f'<div style="background:#f0e6ff;border:2px solid #b5179e;border-radius:10px;padding:0.55rem;text-align:center;font-size:1.05rem;font-weight:700;color:#7209b7;">あ {current["hiragana"]}</div>', unsafe_allow_html=True)
+        with h3:
+            if hl <= 2:
+                if st.button("💡 힌트3: 한자보기", use_container_width=True, key=f"h3_{t_idx}", disabled=(hl < 2)):
+                    st.session_state.hint_level = 3; st.rerun()
+            else:
+                st.markdown(f'<div style="background:#ede9fe;border:2px solid #3a0ca3;border-radius:10px;padding:0.55rem;text-align:center;font-size:1.05rem;font-weight:700;color:#3a0ca3;">字 {current["kanji"]}</div>', unsafe_allow_html=True)
 
-            st.markdown(f'<div style="text-align:center;margin-top:0.5rem;"><a href="https://jisho.org/search/{current["kanji"]}%20%23kanji" target="_blank" style="color:#7209b7;font-size:0.85rem;text-decoration:none;">📖 {current["kanji"]} 필획 순서 보기 (jisho.org) →</a></div>', unsafe_allow_html=True)
-
-            cn, cr = st.columns(2)
-            with cn:
-                next_label = "다음 단어 →" if t_idx + 1 < total_t else "🏁 완료"
-                if st.button(next_label, use_container_width=True, key=f"tn_{t_idx}"):
+        # ── 정답 확인 ──
+        st.markdown("---")
+        if not ans_shown:
+            ca, cb = st.columns(2)
+            with ca:
+                if st.button("✅ 정답 확인", use_container_width=True, key=f"ans_{t_idx}"):
+                    st.session_state.answer_shown = True
+                    ri = next((j for j,w in enumerate(st.session_state.words) if w["kanji"]==current["kanji"]), None)
+                    if ri is not None:
+                        st.session_state.words[ri]["trace_count"] = st.session_state.words[ri].get("trace_count",0)+1
+                    st.rerun()
+            with cb:
+                if st.button("⏭️ 건너뛰기", use_container_width=True, key=f"tsk_{t_idx}"):
                     if t_idx + 1 < total_t:
                         st.session_state.trace_idx += 1
-                        st.session_state.trace_checked = False
-                        st.session_state.trace_check_result = None
+                        st.session_state.hint_level = 0
+                        st.session_state.answer_shown = False
                     else:
                         st.session_state.trace_mode = "finished"
                     st.rerun()
-            with cr:
-                if st.button("🔄 다시 쓰기", use_container_width=True, key=f"tret_{t_idx}"):
-                    st.session_state.trace_checked = False; st.session_state.trace_check_result = None; st.rerun()
         else:
-            if st.button("⏭️ 건너뛰기", key=f"tsk_{t_idx}"):
+            # 정답 카드
+            st.markdown(
+                f'<div style="background:white;border-radius:18px;padding:1.4rem 1.8rem;'
+                f'box-shadow:0 4px 20px rgba(114,9,183,0.13);border:2px solid rgba(181,23,158,0.2);'
+                f'text-align:center;margin-bottom:0.8rem;">'
+                f'<div style="font-size:0.85rem;color:#aaa;margin-bottom:0.3rem;">✅ 정답</div>'
+                f'<div style="font-family:Noto Serif JP,serif;font-size:2.8rem;font-weight:700;color:#1a0a2e;">{current["kanji"]}</div>'
+                f'<div style="font-size:1.1rem;color:#b5179e;font-weight:600;margin-top:0.3rem;">{current["hiragana"]}</div>'
+                f'<div style="font-size:0.9rem;color:#aaa;font-style:italic;">{current["romaji"]}</div>'
+                f'<div style="font-size:1rem;color:#444;margin-top:0.5rem;font-weight:500;">🔹 {current["meaning"]}</div>'
+                f'<div style="margin-top:0.8rem;">'
+                f'<a href="https://jisho.org/search/{current["kanji"]}%20%23kanji" target="_blank" '
+                f'style="color:#7209b7;font-size:0.82rem;text-decoration:none;">📖 필획 순서 보기 (jisho.org) →</a>'
+                f'</div></div>',
+                unsafe_allow_html=True
+            )
+            st.markdown("**내 손글씨와 비교해보세요!**")
+            ev1, ev2, ev3 = st.columns(3)
+            def next_word():
                 if t_idx + 1 < total_t:
-                    st.session_state.trace_idx += 1; st.session_state.trace_checked = False
+                    st.session_state.trace_idx += 1
+                    st.session_state.hint_level = 0
+                    st.session_state.answer_shown = False
                 else:
                     st.session_state.trace_mode = "finished"
-                st.rerun()
+            with ev1:
+                if st.button("😊 잘 썼어요", use_container_width=True, key=f"ev_ok_{t_idx}"):
+                    ri = next((j for j,w in enumerate(st.session_state.words) if w["kanji"]==current["kanji"]), None)
+                    if ri is not None: st.session_state.words[ri]["correct"] += 1
+                    next_word(); st.rerun()
+            with ev2:
+                if st.button("😅 비슷해요", use_container_width=True, key=f"ev_so_{t_idx}"):
+                    next_word(); st.rerun()
+            with ev3:
+                if st.button("😣 틀렸어요", use_container_width=True, key=f"ev_ng_{t_idx}"):
+                    ri = next((j for j,w in enumerate(st.session_state.words) if w["kanji"]==current["kanji"]), None)
+                    if ri is not None: st.session_state.words[ri]["wrong"] += 1
+                    next_word(); st.rerun()
 
+    # ── 완료 ──
     elif st.session_state.trace_mode == "finished":
         total_trace = sum(w.get("trace_count", 0) for w in st.session_state.words)
-        st.markdown(f'<div class="quiz-card"><div style="font-size:4rem;">✍️</div><div style="font-family:Noto Serif JP,serif;font-size:2rem;font-weight:700;color:#1a0a2e;margin:1rem 0;">따라쓰기 완료!</div><div style="font-size:1.2rem;color:#7209b7;font-weight:600;">오늘 {len(st.session_state.trace_words)}개 단어 연습 완료</div><div style="color:#888;margin-top:0.5rem;">누적 따라쓰기 {total_trace}회</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="quiz-card"><div style="font-size:4rem;">✍️</div>'
+            f'<div style="font-family:Noto Serif JP,serif;font-size:2rem;font-weight:700;color:#1a0a2e;margin:1rem 0;">따라쓰기 완료!</div>'
+            f'<div style="font-size:1.2rem;color:#7209b7;font-weight:600;">오늘 {len(st.session_state.trace_words)}개 단어 연습 완료</div>'
+            f'<div style="color:#888;margin-top:0.5rem;">누적 따라쓰기 {total_trace}회</div></div>',
+            unsafe_allow_html=True
+        )
         st.markdown('<div class="section-header">이번 연습 단어</div>', unsafe_allow_html=True)
         for w in st.session_state.trace_words:
-            st.markdown(f'<div class="word-card" style="border-left-color:#6366f1;"><span class="word-kanji">{w["kanji"]}</span><div class="word-hira">{w["hiragana"]} · {w["romaji"]}</div><div class="word-meaning">🔹 {w["meaning"]}</div><span class="word-tag">✍️ {w.get("trace_count",0)}회</span></div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="word-card" style="border-left-color:#6366f1;">'
+                f'<span class="word-kanji">{w["kanji"]}</span>'
+                f'<div class="word-hira">{w["hiragana"]} · {w["romaji"]}</div>'
+                f'<div class="word-meaning">🔹 {w["meaning"]}</div>'
+                f'<span class="word-tag">✍️ {w.get("trace_count",0)}회</span></div>',
+                unsafe_allow_html=True
+            )
         if st.button("🔄 다시 따라쓰기", use_container_width=True):
-            st.session_state.trace_mode = "not_started"; st.rerun()
-
+            st.session_state.trace_mode   = "not_started"
+            st.session_state.hint_level   = 0
+            st.session_state.answer_shown = False
+            st.rerun()
 # ═══════════════════════════════════════════
 # 📊 통계
 # ═══════════════════════════════════════════

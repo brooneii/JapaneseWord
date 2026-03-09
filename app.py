@@ -119,50 +119,211 @@ hr { border-color: rgba(181,23,158,0.15) !important; }
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
-# 기본 단어 데이터 (40개)
+# 기본 단어 데이터 (N5~N1 레벨 포함)
 # ─────────────────────────────────────────
+def _w(kanji, hiragana, romaji, meaning, category, level, favorite=False):
+    return {"kanji":kanji,"hiragana":hiragana,"romaji":romaji,"meaning":meaning,
+            "category":category,"level":level,"favorite":favorite,
+            "correct":0,"wrong":0,"trace_count":0,"kanji_correct":0,"kanji_wrong":0}
+
 DEFAULT_WORDS = [
-    {"kanji": "食べる",   "hiragana": "たべる",     "romaji": "taberu",      "meaning": "먹다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "飲む",     "hiragana": "のむ",       "romaji": "nomu",        "meaning": "마시다",     "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "見る",     "hiragana": "みる",       "romaji": "miru",        "meaning": "보다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "行く",     "hiragana": "いく",       "romaji": "iku",         "meaning": "가다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "来る",     "hiragana": "くる",       "romaji": "kuru",        "meaning": "오다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "書く",     "hiragana": "かく",       "romaji": "kaku",        "meaning": "쓰다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "読む",     "hiragana": "よむ",       "romaji": "yomu",        "meaning": "읽다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "話す",     "hiragana": "はなす",     "romaji": "hanasu",      "meaning": "말하다",     "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "聞く",     "hiragana": "きく",       "romaji": "kiku",        "meaning": "듣다/묻다",  "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "買う",     "hiragana": "かう",       "romaji": "kau",         "meaning": "사다",       "category": "동사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "学校",     "hiragana": "がっこう",   "romaji": "gakkou",      "meaning": "학교",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "電車",     "hiragana": "でんしゃ",   "romaji": "densha",      "meaning": "전철",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "友達",     "hiragana": "ともだち",   "romaji": "tomodachi",   "meaning": "친구",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "今日",     "hiragana": "きょう",     "romaji": "kyou",        "meaning": "오늘",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "昨日",     "hiragana": "きのう",     "romaji": "kinou",       "meaning": "어제",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "明日",     "hiragana": "あした",     "romaji": "ashita",      "meaning": "내일",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "空",       "hiragana": "そら",       "romaji": "sora",        "meaning": "하늘",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "海",       "hiragana": "うみ",       "romaji": "umi",         "meaning": "바다",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "山",       "hiragana": "やま",       "romaji": "yama",        "meaning": "산",         "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "花",       "hiragana": "はな",       "romaji": "hana",        "meaning": "꽃",         "category": "명사",   "favorite": True,  "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "猫",       "hiragana": "ねこ",       "romaji": "neko",        "meaning": "고양이",     "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "犬",       "hiragana": "いぬ",       "romaji": "inu",         "meaning": "강아지",     "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "水",       "hiragana": "みず",       "romaji": "mizu",        "meaning": "물",         "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "火",       "hiragana": "ひ",         "romaji": "hi",          "meaning": "불",         "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "木",       "hiragana": "き",         "romaji": "ki",          "meaning": "나무",       "category": "명사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "美しい",   "hiragana": "うつくしい", "romaji": "utsukushii",  "meaning": "아름답다",   "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "楽しい",   "hiragana": "たのしい",   "romaji": "tanoshii",    "meaning": "즐겁다",     "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "難しい",   "hiragana": "むずかしい", "romaji": "muzukashii",  "meaning": "어렵다",     "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "嬉しい",   "hiragana": "うれしい",   "romaji": "ureshii",     "meaning": "기쁘다",     "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "悲しい",   "hiragana": "かなしい",   "romaji": "kanashii",    "meaning": "슬프다",     "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "暖かい",   "hiragana": "あたたかい", "romaji": "atatakai",    "meaning": "따뜻하다",   "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "寒い",     "hiragana": "さむい",     "romaji": "samui",       "meaning": "춥다",       "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "暑い",     "hiragana": "あつい",     "romaji": "atsui",       "meaning": "덥다",       "category": "형용사", "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "とても",   "hiragana": "とても",     "romaji": "totemo",      "meaning": "매우",       "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "少し",     "hiragana": "すこし",     "romaji": "sukoshi",     "meaning": "조금",       "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "もう",     "hiragana": "もう",       "romaji": "mou",         "meaning": "이미/벌써",  "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "まだ",     "hiragana": "まだ",       "romaji": "mada",        "meaning": "아직",       "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "いつも",   "hiragana": "いつも",     "romaji": "itsumo",      "meaning": "항상",       "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "一緒に",   "hiragana": "いっしょに", "romaji": "issho ni",    "meaning": "함께",       "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
-    {"kanji": "ゆっくり", "hiragana": "ゆっくり",   "romaji": "yukkuri",     "meaning": "천천히",     "category": "부사",   "favorite": False, "correct": 0, "wrong": 0, "trace_count": 0},
+    # ── N5 ──────────────────────────────────────────
+    _w("食べる","たべる","taberu","먹다","동사","N5"),
+    _w("飲む","のむ","nomu","마시다","동사","N5"),
+    _w("見る","みる","miru","보다","동사","N5"),
+    _w("行く","いく","iku","가다","동사","N5"),
+    _w("来る","くる","kuru","오다","동사","N5"),
+    _w("書く","かく","kaku","쓰다","동사","N5"),
+    _w("読む","よむ","yomu","읽다","동사","N5"),
+    _w("話す","はなす","hanasu","말하다","동사","N5"),
+    _w("聞く","きく","kiku","듣다/묻다","동사","N5"),
+    _w("買う","かう","kau","사다","동사","N5"),
+    _w("学校","がっこう","gakkou","학교","명사","N5"),
+    _w("電車","でんしゃ","densha","전철","명사","N5"),
+    _w("友達","ともだち","tomodachi","친구","명사","N5"),
+    _w("今日","きょう","kyou","오늘","명사","N5"),
+    _w("昨日","きのう","kinou","어제","명사","N5"),
+    _w("明日","あした","ashita","내일","명사","N5"),
+    _w("空","そら","sora","하늘","명사","N5"),
+    _w("海","うみ","umi","바다","명사","N5"),
+    _w("山","やま","yama","산","명사","N5"),
+    _w("花","はな","hana","꽃","명사","N5",favorite=True),
+    _w("猫","ねこ","neko","고양이","명사","N5"),
+    _w("犬","いぬ","inu","강아지","명사","N5"),
+    _w("水","みず","mizu","물","명사","N5"),
+    _w("火","ひ","hi","불","명사","N5"),
+    _w("木","き","ki","나무","명사","N5"),
+    _w("美しい","うつくしい","utsukushii","아름답다","형용사","N5"),
+    _w("楽しい","たのしい","tanoshii","즐겁다","형용사","N5"),
+    _w("難しい","むずかしい","muzukashii","어렵다","형용사","N5"),
+    _w("嬉しい","うれしい","ureshii","기쁘다","형용사","N5"),
+    _w("悲しい","かなしい","kanashii","슬프다","형용사","N5"),
+    _w("暖かい","あたたかい","atatakai","따뜻하다","형용사","N5"),
+    _w("寒い","さむい","samui","춥다","형용사","N5"),
+    _w("暑い","あつい","atsui","덥다","형용사","N5"),
+    _w("とても","とても","totemo","매우","부사","N5"),
+    _w("少し","すこし","sukoshi","조금","부사","N5"),
+    _w("もう","もう","mou","이미/벌써","부사","N5"),
+    _w("まだ","まだ","mada","아직","부사","N5"),
+    _w("いつも","いつも","itsumo","항상","부사","N5"),
+    _w("一緒に","いっしょに","issho ni","함께","부사","N5"),
+    _w("ゆっくり","ゆっくり","yukkuri","천천히","부사","N5"),
+    # ── N4 ──────────────────────────────────────────
+    _w("起きる","おきる","okiru","일어나다","동사","N4"),
+    _w("寝る","ねる","neru","자다","동사","N4"),
+    _w("着る","きる","kiru","입다","동사","N4"),
+    _w("脱ぐ","ぬぐ","nugu","벗다","동사","N4"),
+    _w("泳ぐ","およぐ","oyogu","수영하다","동사","N4"),
+    _w("走る","はしる","hashiru","달리다","동사","N4"),
+    _w("歩く","あるく","aruku","걷다","동사","N4"),
+    _w("働く","はたらく","hataraku","일하다","동사","N4"),
+    _w("使う","つかう","tsukau","사용하다","동사","N4"),
+    _w("教える","おしえる","oshieru","가르치다","동사","N4"),
+    _w("病院","びょういん","byouin","병원","명사","N4"),
+    _w("駅","えき","eki","역","명사","N4"),
+    _w("図書館","としょかん","toshokan","도서관","명사","N4"),
+    _w("公園","こうえん","kouen","공원","명사","N4"),
+    _w("会社","かいしゃ","kaisha","회사","명사","N4"),
+    _w("旅行","りょこう","ryokou","여행","명사","N4"),
+    _w("料理","りょうり","ryouri","요리","명사","N4"),
+    _w("音楽","おんがく","ongaku","음악","명사","N4"),
+    _w("映画","えいが","eiga","영화","명사","N4"),
+    _w("運動","うんどう","undou","운동","명사","N4"),
+    _w("便利","べんり","benri","편리하다","형용사","N4"),
+    _w("親切","しんせつ","shinsetsu","친절하다","형용사","N4"),
+    _w("丁寧","ていねい","teinei","정중하다","형용사","N4"),
+    _w("大切","たいせつ","taisetsu","소중하다","형용사","N4"),
+    _w("有名","ゆうめい","yuumei","유명하다","형용사","N4"),
+    # ── N3 ──────────────────────────────────────────
+    _w("決める","きめる","kimeru","결정하다","동사","N3"),
+    _w("集める","あつめる","atsumeru","모으다","동사","N3"),
+    _w("続ける","つづける","tsuzukeru","계속하다","동사","N3"),
+    _w("比べる","くらべる","kuraberu","비교하다","동사","N3"),
+    _w("変わる","かわる","kawaru","바뀌다","동사","N3"),
+    _w("増える","ふえる","fueru","늘다","동사","N3"),
+    _w("減る","へる","heru","줄다","동사","N3"),
+    _w("経済","けいざい","keizai","경제","명사","N3"),
+    _w("社会","しゃかい","shakai","사회","명사","N3"),
+    _w("文化","ぶんか","bunka","문화","명사","N3"),
+    _w("環境","かんきょう","kankyou","환경","명사","N3"),
+    _w("機会","きかい","kikai","기회","명사","N3"),
+    _w("関係","かんけい","kankei","관계","명사","N3"),
+    _w("意見","いけん","iken","의견","명사","N3"),
+    _w("問題","もんだい","mondai","문제","명사","N3"),
+    _w("複雑","ふくざつ","fukuzatsu","복잡하다","형용사","N3"),
+    _w("重要","じゅうよう","juuyou","중요하다","형용사","N3"),
+    _w("必要","ひつよう","hitsuyou","필요하다","형용사","N3"),
+    # ── N2 ──────────────────────────────────────────
+    _w("把握する","はあくする","haaku suru","파악하다","동사","N2"),
+    _w("検討する","けんとうする","kentou suru","검토하다","동사","N2"),
+    _w("提案する","ていあんする","teian suru","제안하다","동사","N2"),
+    _w("判断する","はんだんする","handan suru","판단하다","동사","N2"),
+    _w("確認する","かくにんする","kakunin suru","확인하다","동사","N2"),
+    _w("影響","えいきょう","eikyou","영향","명사","N2"),
+    _w("状況","じょうきょう","joukyou","상황","명사","N2"),
+    _w("結果","けっか","kekka","결과","명사","N2"),
+    _w("原因","げんいん","genin","원인","명사","N2"),
+    _w("対策","たいさく","taisaku","대책","명사","N2"),
+    _w("方針","ほうしん","houshin","방침","명사","N2"),
+    _w("観点","かんてん","kanten","관점","명사","N2"),
+    _w("効率的","こうりつてき","kouritsu teki","효율적","형용사","N2"),
+    _w("具体的","ぐたいてき","gutai teki","구체적","형용사","N2"),
+    # ── N1 ──────────────────────────────────────────
+    _w("醸し出す","かもしだす","kamoshidasu","자아내다","동사","N1"),
+    _w("見据える","みすえる","misueru","직시하다","동사","N1"),
+    _w("踏まえる","ふまえる","fumaeru","근거로 하다","동사","N1"),
+    _w("培う","つちかう","tsuchikau","키우다/배양하다","동사","N1"),
+    _w("葛藤","かっとう","kattou","갈등","명사","N1"),
+    _w("矛盾","むじゅん","mujun","모순","명사","N1"),
+    _w("概念","がいねん","gainen","개념","명사","N1"),
+    _w("倫理","りんり","rinri","윤리","명사","N1"),
+    _w("曖昧","あいまい","aimai","애매하다","형용사","N1"),
+    _w("顕著","けんちょ","kencho","현저하다","형용사","N1"),
 ]
+
+# ── 한자 외우기 데이터 (N5~N1) ──
+KANJI_DATA = {
+    "N5": [
+        {"kanji":"日","onyomi":"ニチ・ジツ","kunyomi":"ひ・か","meaning":"날 일","strokes":4,"example":"日本(にほん) 일본"},
+        {"kanji":"月","onyomi":"ゲツ・ガツ","kunyomi":"つき","meaning":"달 월","strokes":4,"example":"月曜日(げつようび) 월요일"},
+        {"kanji":"火","onyomi":"カ","kunyomi":"ひ","meaning":"불 화","strokes":4,"example":"火曜日(かようび) 화요일"},
+        {"kanji":"水","onyomi":"スイ","kunyomi":"みず","meaning":"물 수","strokes":4,"example":"水曜日(すいようび) 수요일"},
+        {"kanji":"木","onyomi":"モク・ボク","kunyomi":"き","meaning":"나무 목","strokes":4,"example":"木曜日(もくようび) 목요일"},
+        {"kanji":"金","onyomi":"キン・コン","kunyomi":"かね","meaning":"금/돈 금","strokes":8,"example":"金曜日(きんようび) 금요일"},
+        {"kanji":"土","onyomi":"ド・ト","kunyomi":"つち","meaning":"흙 토","strokes":3,"example":"土曜日(どようび) 토요일"},
+        {"kanji":"山","onyomi":"サン","kunyomi":"やま","meaning":"산 산","strokes":3,"example":"富士山(ふじさん) 후지산"},
+        {"kanji":"川","onyomi":"セン","kunyomi":"かわ","meaning":"강 천","strokes":3,"example":"川(かわ) 강"},
+        {"kanji":"田","onyomi":"デン","kunyomi":"た","meaning":"논 전","strokes":5,"example":"田中(たなか) 다나카"},
+        {"kanji":"人","onyomi":"ジン・ニン","kunyomi":"ひと","meaning":"사람 인","strokes":2,"example":"人(ひと) 사람"},
+        {"kanji":"口","onyomi":"コウ・ク","kunyomi":"くち","meaning":"입 구","strokes":3,"example":"入口(いりぐち) 입구"},
+        {"kanji":"目","onyomi":"モク・ボク","kunyomi":"め","meaning":"눈 목","strokes":5,"example":"目(め) 눈"},
+        {"kanji":"耳","onyomi":"ジ","kunyomi":"みみ","meaning":"귀 이","strokes":6,"example":"耳(みみ) 귀"},
+        {"kanji":"手","onyomi":"シュ","kunyomi":"て","meaning":"손 수","strokes":4,"example":"手紙(てがみ) 편지"},
+        {"kanji":"足","onyomi":"ソク","kunyomi":"あし","meaning":"발/다리 족","strokes":7,"example":"足(あし) 발"},
+        {"kanji":"一","onyomi":"イチ・イツ","kunyomi":"ひと","meaning":"한 일","strokes":1,"example":"一番(いちばん) 1등"},
+        {"kanji":"二","onyomi":"ニ","kunyomi":"ふた","meaning":"둘 이","strokes":2,"example":"二人(ふたり) 두 명"},
+        {"kanji":"三","onyomi":"サン","kunyomi":"み・みつ","meaning":"셋 삼","strokes":3,"example":"三月(さんがつ) 3월"},
+        {"kanji":"大","onyomi":"ダイ・タイ","kunyomi":"おお","meaning":"클 대","strokes":3,"example":"大学(だいがく) 대학"},
+    ],
+    "N4": [
+        {"kanji":"安","onyomi":"アン","kunyomi":"やす","meaning":"편안할 안","strokes":6,"example":"安全(あんぜん) 안전"},
+        {"kanji":"暗","onyomi":"アン","kunyomi":"くら","meaning":"어두울 암","strokes":13,"example":"暗い(くらい) 어둡다"},
+        {"kanji":"医","onyomi":"イ","kunyomi":"","meaning":"의원 의","strokes":7,"example":"医者(いしゃ) 의사"},
+        {"kanji":"運","onyomi":"ウン","kunyomi":"はこ","meaning":"운반할 운","strokes":12,"example":"運動(うんどう) 운동"},
+        {"kanji":"映","onyomi":"エイ","kunyomi":"うつ","meaning":"비칠 영","strokes":9,"example":"映画(えいが) 영화"},
+        {"kanji":"駅","onyomi":"エキ","kunyomi":"","meaning":"역 역","strokes":14,"example":"駅(えき) 역"},
+        {"kanji":"音","onyomi":"オン・イン","kunyomi":"おと","meaning":"소리 음","strokes":9,"example":"音楽(おんがく) 음악"},
+        {"kanji":"科","onyomi":"カ","kunyomi":"","meaning":"과목 과","strokes":9,"example":"科学(かがく) 과학"},
+        {"kanji":"花","onyomi":"カ","kunyomi":"はな","meaning":"꽃 화","strokes":7,"example":"花(はな) 꽃"},
+        {"kanji":"夏","onyomi":"カ・ゲ","kunyomi":"なつ","meaning":"여름 하","strokes":10,"example":"夏休み(なつやすみ) 여름방학"},
+        {"kanji":"家","onyomi":"カ・ケ","kunyomi":"いえ","meaning":"집 가","strokes":10,"example":"家族(かぞく) 가족"},
+        {"kanji":"画","onyomi":"ガ・カク","kunyomi":"え","meaning":"그림 화","strokes":8,"example":"映画(えいが) 영화"},
+        {"kanji":"会","onyomi":"カイ・エ","kunyomi":"あ","meaning":"만날 회","strokes":6,"example":"会社(かいしゃ) 회사"},
+        {"kanji":"海","onyomi":"カイ","kunyomi":"うみ","meaning":"바다 해","strokes":9,"example":"海(うみ) 바다"},
+        {"kanji":"楽","onyomi":"ガク・ラク","kunyomi":"たの","meaning":"즐길 락","strokes":13,"example":"音楽(おんがく) 음악"},
+    ],
+    "N3": [
+        {"kanji":"愛","onyomi":"アイ","kunyomi":"","meaning":"사랑 애","strokes":13,"example":"愛情(あいじょう) 애정"},
+        {"kanji":"悪","onyomi":"アク・オ","kunyomi":"わる","meaning":"악할 악","strokes":11,"example":"悪い(わるい) 나쁘다"},
+        {"kanji":"以","onyomi":"イ","kunyomi":"","meaning":"써 이","strokes":5,"example":"以上(いじょう) 이상"},
+        {"kanji":"意","onyomi":"イ","kunyomi":"","meaning":"뜻 의","strokes":13,"example":"意味(いみ) 의미"},
+        {"kanji":"員","onyomi":"イン","kunyomi":"","meaning":"인원 원","strokes":10,"example":"社員(しゃいん) 사원"},
+        {"kanji":"引","onyomi":"イン","kunyomi":"ひ","meaning":"끌 인","strokes":4,"example":"引く(ひく) 당기다"},
+        {"kanji":"飲","onyomi":"イン","kunyomi":"の","meaning":"마실 음","strokes":12,"example":"飲む(のむ) 마시다"},
+        {"kanji":"運","onyomi":"ウン","kunyomi":"はこ","meaning":"운반할 운","strokes":12,"example":"運命(うんめい) 운명"},
+        {"kanji":"営","onyomi":"エイ","kunyomi":"いとな","meaning":"경영할 영","strokes":12,"example":"営業(えいぎょう) 영업"},
+        {"kanji":"衛","onyomi":"エイ","kunyomi":"まも","meaning":"지킬 위","strokes":16,"example":"衛星(えいせい) 위성"},
+        {"kanji":"益","onyomi":"エキ・ヤク","kunyomi":"","meaning":"더할 익","strokes":10,"example":"利益(りえき) 이익"},
+        {"kanji":"回","onyomi":"カイ","kunyomi":"まわ","meaning":"돌 회","strokes":6,"example":"回答(かいとう) 회답"},
+    ],
+    "N2": [
+        {"kanji":"握","onyomi":"アク","kunyomi":"にぎ","meaning":"쥘 악","strokes":12,"example":"握手(あくしゅ) 악수"},
+        {"kanji":"扱","onyomi":"","kunyomi":"あつか","meaning":"다룰 급","strokes":6,"example":"扱う(あつかう) 다루다"},
+        {"kanji":"嵐","onyomi":"ラン","kunyomi":"あらし","meaning":"폭풍 람","strokes":12,"example":"嵐(あらし) 폭풍"},
+        {"kanji":"慰","onyomi":"イ","kunyomi":"なぐさ","meaning":"위로할 위","strokes":15,"example":"慰める(なぐさめる) 위로하다"},
+        {"kanji":"逸","onyomi":"イツ","kunyomi":"そ","meaning":"달아날 일","strokes":11,"example":"逸脱(いつだつ) 일탈"},
+        {"kanji":"陰","onyomi":"イン","kunyomi":"かげ","meaning":"그늘 음","strokes":11,"example":"陰(かげ) 그늘"},
+        {"kanji":"影","onyomi":"エイ","kunyomi":"かげ","meaning":"그림자 영","strokes":15,"example":"影響(えいきょう) 영향"},
+        {"kanji":"鋭","onyomi":"エイ","kunyomi":"するど","meaning":"날카로울 예","strokes":15,"example":"鋭い(するどい) 날카롭다"},
+        {"kanji":"縁","onyomi":"エン","kunyomi":"ふち","meaning":"인연 연","strokes":15,"example":"縁(えん) 인연"},
+        {"kanji":"汚","onyomi":"オ","kunyomi":"きたな・よご","meaning":"더러울 오","strokes":6,"example":"汚い(きたない) 더럽다"},
+    ],
+    "N1": [
+        {"kanji":"葛","onyomi":"カツ","kunyomi":"くず","meaning":"칡 갈","strokes":12,"example":"葛藤(かっとう) 갈등"},
+        {"kanji":"矛","onyomi":"ム","kunyomi":"ほこ","meaning":"창 모","strokes":5,"example":"矛盾(むじゅん) 모순"},
+        {"kanji":"概","onyomi":"ガイ","kunyomi":"おおむ","meaning":"대개 개","strokes":14,"example":"概念(がいねん) 개념"},
+        {"kanji":"曖","onyomi":"アイ","kunyomi":"","meaning":"희미할 애","strokes":17,"example":"曖昧(あいまい) 애매"},
+        {"kanji":"昧","onyomi":"マイ","kunyomi":"","meaning":"어두울 매","strokes":9,"example":"曖昧(あいまい) 애매"},
+        {"kanji":"顕","onyomi":"ケン","kunyomi":"あらわ","meaning":"나타날 현","strokes":18,"example":"顕著(けんちょ) 현저"},
+        {"kanji":"醸","onyomi":"ジョウ","kunyomi":"かも","meaning":"빚을 양","strokes":20,"example":"醸造(じょうぞう) 양조"},
+        {"kanji":"培","onyomi":"バイ","kunyomi":"つちか","meaning":"북돋울 배","strokes":11,"example":"培養(ばいよう) 배양"},
+        {"kanji":"倫","onyomi":"リン","kunyomi":"","meaning":"인륜 륜","strokes":10,"example":"倫理(りんり) 윤리"},
+        {"kanji":"擁","onyomi":"ヨウ","kunyomi":"","meaning":"안을 옹","strokes":17,"example":"擁護(ようご) 옹호"},
+    ],
+}
+
+LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1"]
+CATEGORIES = ["전체", "동사", "명사", "형용사", "부사", "기타"]
 
 CATEGORIES = ["전체", "동사", "명사", "형용사", "부사", "기타"]
 
@@ -171,7 +332,7 @@ CATEGORIES = ["전체", "동사", "명사", "형용사", "부사", "기타"]
 # ─────────────────────────────────────────
 def init_state():
     defaults = {
-        "words": DEFAULT_WORDS.copy(),
+        "words": [dict(w) for w in DEFAULT_WORDS],
         "quiz_index": 0, "quiz_words": [], "quiz_answered": False,
         "quiz_result": None, "quiz_score": {"correct": 0, "wrong": 0},
         "quiz_mode": "not_started", "quiz_type": "kanji→뜻",
@@ -180,6 +341,12 @@ def init_state():
         "trace_idx": 0, "trace_words": [], "trace_mode": "not_started",
         "trace_user_input": "", "trace_checked": False,
         "trace_check_result": None, "trace_show": "한국어 뜻만",
+        # 한자 외우기
+        "kj_level": "N5", "kj_idx": 0, "kj_list": [],
+        "kj_mode": "not_started", "kj_flipped": False,
+        "kj_score": {"correct": 0, "wrong": 0},
+        # 레벨 필터
+        "word_level_filter": "전체",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -206,6 +373,7 @@ def render_word_card(w, sk, sh, sr, sm, border_color="#b5179e"):
     tags = f'<span class="word-tag">{w["category"]}</span>'
     if acc is not None: tags += f' <span class="word-tag">정답률 {acc}%</span>'
     if w.get("trace_count", 0) > 0: tags += f' <span class="word-tag">✍️ {w["trace_count"]}회</span>'
+    if w.get("level"): tags += f' <span class="word-tag" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;">{w["level"]}</span>'
     parts.append(tags)
     return f'<div class="word-card" style="border-left-color:{border_color};">{"".join(parts)}</div>'
 
@@ -233,7 +401,7 @@ def generate_choices(current, all_words, quiz_type):
 with st.sidebar:
     st.markdown("## 🌸 日本語 単語帳")
     st.markdown("---")
-    menu = st.radio("메뉴", ["📖 단어장", "➕ 단어 추가", "❤️ 즐겨찾기", "🧠 퀴즈", "✍️ 따라쓰기", "📊 통계", "⚙️ 표기 설정"], label_visibility="collapsed")
+    menu = st.radio("메뉴", ["📖 단어장", "➕ 단어 추가", "❤️ 즐겨찾기", "🧠 퀴즈", "✍️ 따라쓰기", "🀄 한자 외우기", "📊 통계", "⚙️ 표기 설정"], label_visibility="collapsed")
     st.markdown("---")
     total  = len(st.session_state.words)
     favs   = sum(1 for w in st.session_state.words if w["favorite"])
@@ -263,13 +431,15 @@ SM = st.session_state.show_meaning
 # 📖 단어장
 # ═══════════════════════════════════════════
 if menu == "📖 단어장":
-    col_s, col_c = st.columns([3, 1])
+    col_s, col_c, col_lv = st.columns([3, 1, 1])
     with col_s: search = st.text_input("🔍 검색 (한자·히라가나·뜻)", placeholder="예: 食べる / たべる / 먹다")
     with col_c: cat_filter = st.selectbox("카테고리", CATEGORIES)
+    with col_lv: lv_filter = st.selectbox("레벨", LEVELS)
 
     words = st.session_state.words
     if search:    words = [w for w in words if search in w["kanji"] or search in w["hiragana"] or search in w["meaning"]]
     if cat_filter != "전체": words = [w for w in words if w["category"] == cat_filter]
+    if lv_filter != "전체":  words = [w for w in words if w.get("level") == lv_filter]
 
     st.markdown(f'<div class="section-header">단어 목록 <span style="font-size:1rem;color:#b5179e;">({len(words)}개)</span></div>', unsafe_allow_html=True)
 
@@ -375,7 +545,8 @@ elif menu == "🧠 퀴즈":
         src = {"전체 단어": lambda w: True, "즐겨찾기만": lambda w: w["favorite"],
                "동사만": lambda w: w["category"]=="동사", "명사만": lambda w: w["category"]=="명사",
                "형용사만": lambda w: w["category"]=="형용사", "부사만": lambda w: w["category"]=="부사"}
-        pool = [w for w in st.session_state.words if src[quiz_source](w)]
+        quiz_level = st.selectbox("레벨 필터", LEVELS, key="quiz_lv")
+        pool = [w for w in st.session_state.words if src[quiz_source](w) and (quiz_level=="전체" or w.get("level")==quiz_level)]
         num_q = st.slider("문제 수", 5, max(5, min(30, len(pool))), min(10, max(5, len(pool))))
 
         if st.button("🚀 퀴즈 시작!", use_container_width=True):
@@ -464,7 +635,8 @@ elif menu == "✍️ 따라쓰기":
             "형용사만":   lambda w: w["category"] == "형용사",
             "오답 단어":  lambda w: w["wrong"] > 0,
         }
-        pool = [w for w in st.session_state.words if src_map[tr_src](w)]
+        tr_lv = st.selectbox("레벨 필터", LEVELS, key="tr_lv")
+        pool = [w for w in st.session_state.words if src_map[tr_src](w) and (tr_lv=="전체" or w.get("level")==tr_lv)]
         if st.button("✍️ 따라쓰기 시작!", use_container_width=True):
             if not pool:
                 st.warning("해당 범위에 단어가 없습니다.")
@@ -715,6 +887,255 @@ elif menu == "✍️ 따라쓰기":
             st.session_state.hint_level   = 0
             st.session_state.answer_shown = False
             st.rerun()
+# ═══════════════════════════════════════════
+# 🀄 한자 외우기
+# ═══════════════════════════════════════════
+elif menu == "🀄 한자 외우기":
+    import streamlit.components.v1 as components_kj
+
+    st.markdown('<div class="section-header">🀄 한자 외우기</div>', unsafe_allow_html=True)
+
+    # ── 레벨 선택 탭 ──
+    lv_tabs = st.tabs(["N5", "N4", "N3", "N2", "N1"])
+    level_names = ["N5", "N4", "N3", "N2", "N1"]
+
+    # 현재 선택 레벨 (탭 인덱스 → 레벨명)
+    if "kj_tab" not in st.session_state:
+        st.session_state.kj_tab = 0
+
+    for ti, (tab, lvname) in enumerate(zip(lv_tabs, level_names)):
+        with tab:
+            kanji_list = KANJI_DATA.get(lvname, [])
+            if not kanji_list:
+                st.info("데이터 준비 중입니다.")
+                continue
+
+            st.markdown(f'<div style="color:#9b6fa0;font-size:0.85rem;margin-bottom:1rem;">총 {len(kanji_list)}자 · 카드를 탭/클릭하면 뒤집힙니다</div>', unsafe_allow_html=True)
+
+            # ── 모드 선택 ──
+            kj_mode_key = f"kj_mode_{lvname}"
+            kj_idx_key  = f"kj_idx_{lvname}"
+            kj_ok_key   = f"kj_ok_{lvname}"
+            kj_ng_key   = f"kj_ng_{lvname}"
+            kj_order_key= f"kj_order_{lvname}"
+
+            for dk, dv in [(kj_mode_key,"browse"),(kj_idx_key,0),(kj_ok_key,0),(kj_ng_key,0),(kj_order_key,None)]:
+                if dk not in st.session_state:
+                    st.session_state[dk] = dv
+            if st.session_state[kj_order_key] is None:
+                st.session_state[kj_order_key] = list(range(len(kanji_list)))
+
+            mode = st.session_state[kj_mode_key]
+
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                if st.button("📋 목록 보기", use_container_width=True, key=f"mbrowse_{lvname}",
+                             type="primary" if mode=="browse" else "secondary"):
+                    st.session_state[kj_mode_key] = "browse"; st.rerun()
+            with m2:
+                if st.button("🃏 플래시카드", use_container_width=True, key=f"mcard_{lvname}",
+                             type="primary" if mode=="card" else "secondary"):
+                    order = list(range(len(kanji_list))); random.shuffle(order)
+                    st.session_state[kj_order_key] = order
+                    st.session_state[kj_idx_key]   = 0
+                    st.session_state[kj_ok_key]    = 0
+                    st.session_state[kj_ng_key]    = 0
+                    st.session_state[kj_mode_key]  = "card"; st.rerun()
+            with m3:
+                if st.button("🧪 퀴즈", use_container_width=True, key=f"mqz_{lvname}",
+                             type="primary" if mode=="quiz" else "secondary"):
+                    order = list(range(len(kanji_list))); random.shuffle(order)
+                    st.session_state[kj_order_key]      = order
+                    st.session_state[kj_idx_key]        = 0
+                    st.session_state[kj_ok_key]         = 0
+                    st.session_state[kj_ng_key]         = 0
+                    st.session_state[f"kj_qans_{lvname}"] = None
+                    st.session_state[f"kj_qshow_{lvname}"] = False
+                    st.session_state[kj_mode_key]       = "quiz"; st.rerun()
+
+            st.markdown("---")
+
+            # ═══ 목록 보기 ═══
+            if mode == "browse":
+                cols_per_row = 4
+                rows = [kanji_list[i:i+cols_per_row] for i in range(0, len(kanji_list), cols_per_row)]
+                for row in rows:
+                    cols = st.columns(cols_per_row)
+                    for ci, kdata in enumerate(row):
+                        with cols[ci]:
+                            st.markdown(
+                                f'<div style="background:white;border-radius:14px;padding:1rem 0.5rem;'
+                                f'text-align:center;box-shadow:0 2px 12px rgba(114,9,183,0.08);'
+                                f'border-top:3px solid #b5179e;margin-bottom:0.5rem;">' 
+                                f'<div style="font-family:Noto Serif JP,serif;font-size:2.2rem;font-weight:700;color:#1a0a2e;">{kdata["kanji"]}</div>'
+                                f'<div style="font-size:0.75rem;color:#b5179e;margin:0.2rem 0;">{kdata["onyomi"]} / {kdata["kunyomi"]}</div>'
+                                f'<div style="font-size:0.8rem;font-weight:600;color:#444;">{kdata["meaning"]}</div>'
+                                f'<div style="font-size:0.7rem;color:#aaa;margin-top:0.3rem;">{kdata["strokes"]}획</div>'
+                                f'<div style="font-size:0.7rem;color:#777;margin-top:0.3rem;font-style:italic;">{kdata["example"]}</div>'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+
+            # ═══ 플래시카드 ═══
+            elif mode == "card":
+                order   = st.session_state[kj_order_key]
+                idx     = st.session_state[kj_idx_key]
+                ok_cnt  = st.session_state[kj_ok_key]
+                ng_cnt  = st.session_state[kj_ng_key]
+                total_c = len(order)
+                flip_key = f"kj_flip_{lvname}_{idx}"
+                if flip_key not in st.session_state:
+                    st.session_state[flip_key] = False
+                flipped = st.session_state[flip_key]
+
+                if idx >= total_c:
+                    # 완료
+                    pct = round(ok_cnt/(ok_cnt+ng_cnt)*100) if (ok_cnt+ng_cnt)>0 else 0
+                    st.markdown(
+                        f'<div class="quiz-card"><div style="font-size:3.5rem;">🀄</div>'
+                        f'<div style="font-family:Noto Serif JP,serif;font-size:1.8rem;font-weight:700;color:#1a0a2e;margin:0.8rem 0;">학습 완료!</div>'
+                        f'<div style="font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,#b5179e,#7209b7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{pct}%</div>'
+                        f'<div style="color:#888;">✅ {ok_cnt}개 알았어요 / ❌ {ng_cnt}개 몰랐어요</div></div>',
+                        unsafe_allow_html=True
+                    )
+                    if st.button("🔄 다시 학습", use_container_width=True, key=f"kj_restart_{lvname}"):
+                        order2 = list(range(len(kanji_list))); random.shuffle(order2)
+                        st.session_state[kj_order_key] = order2
+                        st.session_state[kj_idx_key]   = 0
+                        st.session_state[kj_ok_key]    = 0
+                        st.session_state[kj_ng_key]    = 0
+                        st.rerun()
+                else:
+                    kdata = kanji_list[order[idx]]
+                    st.progress(idx / total_c, text=f"🀄 {idx+1} / {total_c}  ·  ✅{ok_cnt}  ❌{ng_cnt}")
+
+                    # 플래시카드 HTML
+                    front_html = (
+                        f'<div style="font-family:Noto Serif JP,serif;font-size:5rem;font-weight:700;color:#1a0a2e;">{kdata["kanji"]}</div>'
+                        f'<div style="color:#b5179e;margin-top:0.5rem;font-size:0.9rem;">{lvname} · {kdata["strokes"]}획</div>'
+                        f'<div style="color:#aaa;font-size:0.85rem;margin-top:0.3rem;">탭하면 뒷면 확인</div>'
+                    )
+                    back_html  = (
+                        f'<div style="font-family:Noto Serif JP,serif;font-size:3.5rem;font-weight:700;color:#1a0a2e;">{kdata["kanji"]}</div>'
+                        f'<div style="font-size:1rem;font-weight:700;color:#b5179e;margin-top:0.4rem;">{kdata["meaning"]}</div>'
+                        f'<div style="font-size:0.85rem;color:#555;margin-top:0.3rem;">음독: {kdata["onyomi"]}</div>'
+                        f'<div style="font-size:0.85rem;color:#555;">훈독: {kdata["kunyomi"]}</div>'
+                        f'<div style="font-size:0.78rem;color:#888;margin-top:0.4rem;font-style:italic;">{kdata["example"]}</div>'
+                    )
+                    card_content = back_html if flipped else front_html
+                    bg = "#fff7fb" if flipped else "white"
+                    border = "#b5179e" if flipped else "#e0e0e0"
+                    jisho_btn = f'<div style="margin-top:0.8rem;"><a href="https://jisho.org/search/{kdata["kanji"]}%20%23kanji" target="_blank" style="color:#7209b7;font-size:0.8rem;text-decoration:none;">📖 필획 순서 보기 →</a></div>' if flipped else ""
+
+                    st.markdown(
+                        f'<div onclick="" style="background:{bg};border:2px solid {border};border-radius:20px;'
+                        f'padding:2rem;text-align:center;box-shadow:0 6px 24px rgba(114,9,183,0.1);'
+                        f'min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;'
+                        f'cursor:pointer;transition:all 0.3s;">{card_content}{jisho_btn}</div>',
+                        unsafe_allow_html=True
+                    )
+
+                    if not flipped:
+                        if st.button("🔄 뒤집기", use_container_width=True, key=f"kj_flip_btn_{lvname}_{idx}"):
+                            st.session_state[flip_key] = True; st.rerun()
+                    else:
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            if st.button("✅ 알았어요", use_container_width=True, key=f"kj_ok_btn_{lvname}_{idx}"):
+                                st.session_state[kj_ok_key]    += 1
+                                st.session_state[kj_idx_key]   += 1
+                                st.session_state[flip_key]      = False; st.rerun()
+                        with c2:
+                            if st.button("❌ 몰랐어요", use_container_width=True, key=f"kj_ng_btn_{lvname}_{idx}"):
+                                st.session_state[kj_ng_key]    += 1
+                                st.session_state[kj_idx_key]   += 1
+                                st.session_state[flip_key]      = False; st.rerun()
+
+            # ═══ 퀴즈 ═══
+            elif mode == "quiz":
+                order    = st.session_state[kj_order_key]
+                idx      = st.session_state[kj_idx_key]
+                ok_cnt   = st.session_state[kj_ok_key]
+                ng_cnt   = st.session_state[kj_ng_key]
+                total_c  = len(order)
+                qans_key = f"kj_qans_{lvname}"
+                qshow_key= f"kj_qshow_{lvname}"
+                if qans_key  not in st.session_state: st.session_state[qans_key]  = None
+                if qshow_key not in st.session_state: st.session_state[qshow_key] = False
+
+                if idx >= total_c:
+                    pct = round(ok_cnt/(ok_cnt+ng_cnt)*100) if (ok_cnt+ng_cnt)>0 else 0
+                    st.markdown(
+                        f'<div class="quiz-card"><div style="font-size:3.5rem;">🎉</div>'
+                        f'<div style="font-family:Noto Serif JP,serif;font-size:1.8rem;font-weight:700;color:#1a0a2e;margin:0.8rem 0;">퀴즈 완료!</div>'
+                        f'<div style="font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,#b5179e,#7209b7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{pct}점</div>'
+                        f'<div style="color:#888;">정답 {ok_cnt}개 / 오답 {ng_cnt}개</div></div>',
+                        unsafe_allow_html=True
+                    )
+                    if st.button("🔄 다시 퀴즈", use_container_width=True, key=f"kj_qrestart_{lvname}"):
+                        order2 = list(range(len(kanji_list))); random.shuffle(order2)
+                        st.session_state[kj_order_key]  = order2
+                        st.session_state[kj_idx_key]    = 0
+                        st.session_state[kj_ok_key]     = 0
+                        st.session_state[kj_ng_key]     = 0
+                        st.session_state[qans_key]      = None
+                        st.session_state[qshow_key]     = False
+                        st.rerun()
+                else:
+                    kdata = kanji_list[order[idx]]
+                    st.progress(idx / total_c, text=f"🧪 {idx+1} / {total_c}  ·  ✅{ok_cnt}  ❌{ng_cnt}")
+
+                    # 퀴즈 유형: 한자 → 뜻
+                    st.markdown(
+                        f'<div class="quiz-card">'
+                        f'<div style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">이 한자의 뜻은?</div>'
+                        f'<div style="font-family:Noto Serif JP,serif;font-size:4rem;font-weight:700;color:#1a0a2e;">{kdata["kanji"]}</div>'
+                        f'<div style="font-size:0.85rem;color:#b5179e;margin-top:0.3rem;">{kdata["strokes"]}획</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
+                    # 보기 4개 생성
+                    others = [k for i2, k in enumerate(kanji_list) if i2 != order[idx]]
+                    wrong3 = random.sample(others, min(3, len(others)))
+                    choices = random.sample([kdata["meaning"]] + [k["meaning"] for k in wrong3], min(4, len(wrong3)+1))
+
+                    answered = st.session_state[qans_key]
+                    if answered is None:
+                        qc1, qc2 = st.columns(2)
+                        for ci2, ch in enumerate(choices):
+                            with (qc1 if ci2%2==0 else qc2):
+                                if st.button(ch, use_container_width=True, key=f"kj_ch_{lvname}_{idx}_{ci2}"):
+                                    st.session_state[qans_key]  = ch
+                                    st.session_state[qshow_key] = True
+                                    if ch == kdata["meaning"]:
+                                        st.session_state[kj_ok_key] += 1
+                                    else:
+                                        st.session_state[kj_ng_key] += 1
+                                    st.rerun()
+                    else:
+                        is_ok = (answered == kdata["meaning"])
+                        if is_ok:
+                            st.markdown('<div class="correct-badge">🎉 정답!</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="wrong-badge">❌ 오답 · 정답: {kdata["meaning"]}</div>', unsafe_allow_html=True)
+                        st.markdown(
+                            f'<div style="background:white;border-radius:14px;padding:1rem 1.5rem;'
+                            f'box-shadow:0 2px 12px rgba(114,9,183,0.08);margin:0.5rem 0;text-align:center;">'
+                            f'<div style="font-family:Noto Serif JP,serif;font-size:2rem;font-weight:700;">{kdata["kanji"]}</div>'
+                            f'<div style="color:#b5179e;font-size:0.9rem;">{kdata["onyomi"]} / {kdata["kunyomi"]}</div>'
+                            f'<div style="color:#444;font-size:0.85rem;margin-top:0.2rem;">{kdata["example"]}</div>'
+                            f'<a href="https://jisho.org/search/{kdata["kanji"]}%20%23kanji" target="_blank" '
+                            f'style="color:#7209b7;font-size:0.78rem;text-decoration:none;">📖 필획 순서 →</a>'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+                        if st.button("다음 →", use_container_width=True, key=f"kj_next_{lvname}_{idx}"):
+                            st.session_state[kj_idx_key]  += 1
+                            st.session_state[qans_key]     = None
+                            st.session_state[qshow_key]    = False
+                            st.rerun()
+
 # ═══════════════════════════════════════════
 # 📊 통계
 # ═══════════════════════════════════════════
